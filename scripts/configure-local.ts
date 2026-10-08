@@ -20,6 +20,7 @@ try {
   await client.query("GRANT SELECT ON ALL TABLES IN SCHEMA public TO cloudsentry_app");
   await client.query("GRANT INSERT ON audit_events, auth_attempts, sessions, imports, resources, observations, findings, remediations, decisions TO cloudsentry_app");
   await client.query("GRANT UPDATE ON imports, resources, findings, remediations TO cloudsentry_app");
+  await client.query("GRANT UPDATE (password_hash) ON operators TO cloudsentry_app");
   await client.query("GRANT DELETE ON sessions, auth_attempts TO cloudsentry_app");
   const operator = await client.query("insert into operators (login, password_hash) values ('captain', $1) returning id", [passwordHash]);
   await client.query("insert into audit_events (operator_id, action, next_state, outcome) values ($1, 'operator.created', 'enabled', 'success')", [operator.rows[0].id]);

@@ -3,6 +3,11 @@ const parameters = { N: 32768, r: 8, p: 1, maxmem: 64 * 1024 * 1024 };
 const derive = (password: string, salt: string) => new Promise<Buffer>((resolve, reject) => {
   scrypt(password, salt, 64, parameters, (error, key) => error ? reject(error) : resolve(key));
 });
+export function strongPassword(value: string) {
+  if (value.length < 12 || value.length > 256) return false;
+  const groups = [/[a-z]/.test(value), /[A-Z]/.test(value), /[0-9]/.test(value), /[^A-Za-z0-9]/.test(value)];
+  return groups.filter(Boolean).length >= 3;
+}
 export async function hashPassword(password: string) {
   if (password.length < 12 || password.length > 256) throw new Error("PASSWORD_LENGTH");
   const salt = randomBytes(16).toString("hex");

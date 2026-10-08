@@ -81,6 +81,10 @@ Tables: operators, sessions, auth_attempts, imports, resources, observations, fi
 
 Stage 3 implements validated whole-upload transactions, duplicate handling, sufficient-evidence classifications and import audit events. Remediation generation, approval/rejection and simulation commit their state changes and audit events atomically using transactions and row locks.
 
+## Operator profile
+
+The protected `/profile` page shows the existing login ID, account creation time, and recent operator audit events. The current single-operator schema has no email or display-name field, so neither is invented or editable. The password-change form requires the current password, a stronger new password, and an exact-origin request. The server rate-limits attempts, stores a salted scrypt hash, revokes every session after success, and records the change in the audit log. The restricted runtime role needs only `GRANT UPDATE (password_hash) ON operators TO cloudsentry_app`; `npm run db:configure` applies this grant for new installations. Existing installations must apply that narrow grant with their database administrator before enabling password changes.
+
 ## Checks
 
 ```text

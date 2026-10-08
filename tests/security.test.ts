@@ -1,7 +1,17 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
-import { hashPassword, verifyPassword, createSessionToken, readSessionToken, isSameOrigin } from "../src/lib/security";
+import { hashPassword, verifyPassword, createSessionToken, readSessionToken, isSameOrigin, strongPassword } from "../src/lib/security";
+
+test("password change rejects weak and unchanged choices", async () => {
+  assert.equal(strongPassword("short"), false);
+  assert.equal(strongPassword("onlylowercaseletters"), false);
+  assert.equal(strongPassword("StrongEnough9!"), true);
+  assert.equal(strongPassword("a".repeat(257) + "9!"), false);
+  const existing = await hashPassword("StrongEnough9!");
+  assert.equal(await verifyPassword("WrongCurrent9!", existing), false);
+  assert.equal(await verifyPassword("StrongEnough9!", existing), true);
+});
 test("password hashes are salted and reject wrong or malformed credentials", async () => {
   const password = randomBytes(24).toString("base64url");
   const first = await hashPassword(password); const second = await hashPassword(password);
