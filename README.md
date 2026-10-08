@@ -1,12 +1,30 @@
 # CloudSentry · COMMAND X
 
-PS-03, ZEPHORIA 2K26. Stage 2 infrastructure and application foundation.
+PS-03, ZEPHORIA 2K26. Stage 3 ingestion, anomaly detection and cost intelligence.
 
 ## Scope
 
 Next.js App Router, TypeScript, Tailwind CSS, PostgreSQL, Drizzle ORM, and Zod. Operator authentication uses scrypt password hashes, signed random session cookies, database-backed sessions, exact-origin mutation protection, and a database-backed login attempt budget (five attempts across this single-operator application per 15 minutes). Passwords and connection strings never reach client components.
 
-Stage 3 modules are intentionally pending approval: ingestion, anomaly detection, cost calculation, dashboard analytics, script generation, approval decisions, and remediation simulation. No cloud commands are executed. No fabricated resource metrics are shown.
+Stage 3 adds authenticated CSV/JSON upload, transactional persistence, semantic duplicate prevention, exact resource inspection, explainable anomaly findings and currency-separated 30-day projections. The full dashboard, script generation, approval decisions and remediation simulation await later approval. No cloud commands are executed. No fabricated resource metrics are shown.
+
+The application is one shared operator workspace: every enabled operator is trusted to read workspace imports/resources; operator provisioning requires the administrative connection. Uploaded cloud account IDs are resource identities, not separate application tenants. This is not a multi-tenant authorization system.
+
+## Stage 3 input and detection
+
+See [canonical input format](docs/input-format.md) for required/optional fields and pricing/metadata conventions. Upload at `/console`; inspect saved import results and resource evidence there. JSON accepts an array or `{ "observations": [...], "demo": true }`; CSV requires headers. Maximum upload: 2 MiB, 5,000 rows. All rows validate before one transaction saves imports, resources, observations, findings, summaries and audit history.
+
+Synthetic samples are available under `public/fixtures/`: spike CSV/JSON, idle compute, unattached storage, over-provisioned compute, malformed input and insufficient evidence. Both spike files normalize to the same semantic hash. Uploading the second format returns the original persisted import; it does not create duplicate observations. The synthetic EC2 ID is preserved exactly.
+
+Each upload must include its complete qualifying evidence window. Identical content returns the original result. New content with observation intervals overlapping existing records is rejected and rolled back. Missing measurements stay null. Raw original rows, metadata, rate provenance and versioned findings persist in PostgreSQL.
+
+- Idle: running compute, duration-weighted CPU p95 < 5% and memory p95 < 10%.
+- Over-provisioned: running compute, CPU p95 < 20% and memory p95 < 40%, excluding idle.
+- Unattached storage: explicit unattached state and zero attachments throughout the window.
+- These three rules require at least a 24-hour span, 90% interval coverage and sufficient complete measurements. Missing replacement pricing produces an unpriced finding.
+- Spike: latest actual USD hourly interval cost > 3× the exact median of at least six contiguous preceding hourly costs, with increase >= USD 1/hour. Spike evidence does not require 24 hours. No non-USD threshold or conversion is invented.
+
+Financial calculations use integer/rational arithmetic and round only the final projected monetary amount to eight decimal places. Projections use 720 hours. Monthly GiB storage rates project the documented monthly amount directly; halfway-unit medians retain exact threshold comparisons. Current resource waste selects only the newest eligible finding. Potential spike excess and saved per-import estimates are shown separately; different currencies are never combined. Resource views show the latest 100 observations; all observations remain in PostgreSQL.
 
 ## Zero-cost policy
 
@@ -53,7 +71,7 @@ Tables: operators, sessions, auth_attempts, imports, resources, observations, fi
 - Audit and decision updates/deletions are rejected. The application role also lacks truncate and schema-management privileges.
 - All remediation records are constrained to simulation only.
 
-Stage 3 must implement validated whole-upload transactions, duplicate handling, sufficient-evidence classifications, atomic approved state transitions, and audit events. These schema constraints support that work but do not substitute for the remaining application logic.
+Stage 3 implements validated whole-upload transactions, duplicate handling, sufficient-evidence classifications and import audit events. Future remediation modules must commit approval/state transitions and audit events atomically; schema constraints do not substitute for that remaining application logic.
 
 ## Checks
 

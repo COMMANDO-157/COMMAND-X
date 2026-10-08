@@ -23,8 +23,9 @@ export const authAttempts = pgTable("auth_attempts", {
 export const imports = pgTable("imports", {
   id: id(), operatorId: uuid("operator_id").references(() => operators.id).notNull(), filename: text("filename").notNull(),
   fileHash: text("file_hash").notNull().unique(), demo: boolean("demo").default(false).notNull(), status: text("status").notNull(),
+  contentHash: text("content_hash").unique(), warnings: jsonb("warnings").default([]).notNull(), summaries: jsonb("summaries").default([]).notNull(),
   rowCount: integer("row_count").notNull(), validationErrors: jsonb("validation_errors").default([]).notNull(), createdAt: createdAt(),
-}, (t) => [check("imports_row_count_check", sql`${t.rowCount} >= 0 AND ${t.rowCount} <= 5000`)]);
+}, (t) => [index("imports_created_idx").on(t.createdAt), check("imports_row_count_check", sql`${t.rowCount} >= 0 AND ${t.rowCount} <= 5000`)]);
 export const resources = pgTable("resources", {
   id: id(), provider: provider("provider").notNull(), accountScope: text("account_scope").notNull(), region: text("region").notNull(),
   type: resourceType("type").notNull(), externalId: text("external_id").notNull(), metadata: jsonb("metadata").default({}).notNull(), createdAt: createdAt(),
@@ -36,8 +37,10 @@ export const observations = pgTable("observations", {
   attachmentCount: integer("attachment_count"), state: text("state"), intervalCost: numeric("interval_cost", { precision: 20, scale: 8 }),
   hourlyRate: numeric("hourly_rate", { precision: 20, scale: 8 }), currency: text("currency").notNull(), rateSource: text("rate_source").notNull(),
   sourceRow: integer("source_row").notNull(), createdAt: createdAt(),
+  rawEvidence: jsonb("raw_evidence").default({}).notNull(),
 }, (t) => [
   uniqueIndex("observations_resource_time_idx").on(t.resourceId, t.observedAt, t.durationSeconds),
+  index("observations_import_idx").on(t.importId),
   check("observations_duration_check", sql`${t.durationSeconds} > 0`),
   check("observations_cpu_check", sql`${t.cpuPercent} BETWEEN 0 AND 100`),
   check("observations_memory_check", sql`${t.memoryPercent} BETWEEN 0 AND 100`),
@@ -50,11 +53,12 @@ export const findings = pgTable("findings", {
   rule: text("rule").notNull(), ruleVersion: text("rule_version").notNull(), parameters: jsonb("parameters").notNull(), evidence: jsonb("evidence").notNull(),
   windowStart: timestamp("window_start", { withTimezone: true }).notNull(), windowEnd: timestamp("window_end", { withTimezone: true }).notNull(),
   severity: text("severity").notNull(), explanation: text("explanation").notNull(), costInputs: jsonb("cost_inputs").notNull(),
-  projectedLeakage: numeric("projected_leakage", { precision: 20, scale: 8 }), currency: text("currency").notNull(),
+  projectedLeakage: numeric("projected_leakage", { precision: 24, scale: 8 }), currency: text("currency").notNull(),
   estimateCategory: text("estimate_category").notNull(), selectedForTotal: boolean("selected_for_total").default(false).notNull(),
   status: findingStatus("status").default("open").notNull(), createdAt: createdAt(),
 }, (t) => [
-  uniqueIndex("findings_rule_import_resource_idx").on(t.resourceId, t.importId, t.rule),
+  uniqueIndex("findings_rule_import_resource_idx").on(t.resourceId, t.importId, t.rule, t.currency),
+  index("findings_import_idx").on(t.importId),
   uniqueIndex("findings_one_total_per_resource_idx").on(t.resourceId).where(sql`${t.selectedForTotal} = true`),
   check("findings_category_check", sql`${t.estimateCategory} IN ('avoidable_waste', 'potential_excess_spend')`),
   check("findings_spike_total_check", sql`${t.estimateCategory} <> 'potential_excess_spend' OR ${t.selectedForTotal} = false`),
