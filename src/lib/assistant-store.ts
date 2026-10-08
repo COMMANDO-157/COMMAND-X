@@ -26,9 +26,12 @@ export async function answerAssistant(question: string, operatorId: string) {
       if (!rows.length) return `${header} No finding is stored for this resource.`;
       const details = rows.map(f => {
         const inputs = f.costInputs && typeof f.costInputs === "object" ? f.costInputs as Record<string, unknown> : {};
+        const evidence = f.evidence && typeof f.evidence === "object" ? f.evidence as Record<string, unknown> : {};
         const basis = ["baselineHourlyCost", "latestHourlyCost", "excessHourlyCost", "currentHourlyRate", "replacementHourlyRate"]
           .map(key => clean(inputs[key]) ? `${key}: ${clean(inputs[key])}` : null).filter(Boolean).join(", ");
-        return `${f.demo ? "DEMO — " : ""}${f.rule.replaceAll("_", " ")} (${f.status}): ${f.explanation} 30-day ${f.category === "potential_excess_spend" ? "potential excess" : "avoidable-waste estimate"}: ${money(f.estimate, f.currency)}.${basis ? ` Stored cost inputs: ${basis}.` : ""}`;
+        const measured = ["observationCount", "coverageRatio", "cpuP95", "memoryP95", "attachmentCount", "baselineObservationCount"]
+          .map(key => clean(evidence[key]) ? `${key}: ${clean(evidence[key])}` : null).filter(Boolean).join(", ");
+        return `${f.demo ? "DEMO — " : ""}${f.rule.replaceAll("_", " ")} (${f.status}): ${f.explanation} 30-day ${f.category === "potential_excess_spend" ? "potential excess" : "avoidable-waste estimate"}: ${money(f.estimate, f.currency)}.${measured ? ` Stored evidence: ${measured}.` : ""}${basis ? ` Stored cost inputs: ${basis}.` : ""}`;
       });
       return [header, ...details].join("\n");
     }));
