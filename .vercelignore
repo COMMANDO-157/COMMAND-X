@@ -1,0 +1,8 @@
+.env*
+!.env.example
+credentials.local.txt
+.agents/
+.git/
+node_modules/
+.next/
+outputs/

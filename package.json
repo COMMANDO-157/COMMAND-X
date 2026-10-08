@@ -1,0 +1,53 @@
+{
+  "name": "cloudsentry",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "db:inspect": "tsx scripts/inspect-database.ts",
+    "db:verify": "tsx scripts/verify-persistence.ts",
+    "operator:create": "tsx scripts/bootstrap-operator.ts",
+    "db:configure": "tsx scripts/configure-local.ts",
+    "test:http": "tsx scripts/verify-http.ts",
+    "test:secrets": "tsx scripts/verify-secrets.ts"
+  },
+  "dependencies": {
+    "@vercel/functions": "^3.9.11",
+    "drizzle-orm": "^0.45.3",
+    "next": "16.4.0",
+    "pg": "^8.23.1",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "server-only": "^0.0.1",
+    "zod": "^4.6.5"
+  },
+  "overrides": {
+    "@esbuild-kit/core-utils": {
+      "esbuild": "^0.28.2"
+    }
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@neon/config": "^1.8.4",
+    "@tailwindcss/turbopack": "^4",
+    "@types/node": "^20",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "drizzle-kit": "^0.31.11",
+    "eslint": "^10.12.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "tailwindcss": "^4",
+    "tsx": "^4.23.15",
+    "typescript": "^5",
+    "typescript-eslint": "^8.71.1"
+  }
+}
