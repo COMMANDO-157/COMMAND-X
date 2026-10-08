@@ -85,6 +85,12 @@ Stage 3 implements validated whole-upload transactions, duplicate handling, suff
 
 The protected `/profile` page shows the existing login ID, account creation time, and recent operator audit events. The current single-operator schema has no email or display-name field, so neither is invented or editable. The password-change form requires the current password, a stronger new password, and an exact-origin request. The server rate-limits attempts, stores a salted scrypt hash, revokes every session after success, and records the change in the audit log. The restricted runtime role needs only `GRANT UPDATE (password_hash) ON operators TO cloudsentry_app`; `npm run db:configure` applies this grant for new installations. Existing installations must apply that narrow grant with their database administrator before enabling password changes.
 
+## Contextual guided assistant
+
+The dashboard assistant uses a protected, exact-origin, read-only API. It answers supported questions about the workflow, four anomaly rules, cost categories, remediation safeguards, saved imports and findings, recent operator audit activity, and exact resource IDs from that operator's uploaded observations. Resource answers identify the stored provider, account, region, finding explanation, 30-day projection, and selected cost inputs. Unknown IDs are reported as absent. No LLM, provider API, or live cloud access is integrated. Chat history stays in the current page and disappears when it is left; the assistant cannot approve, reject, simulate, or execute commands. Summaries are bounded to recent records and label limits rather than presenting a truncated total as complete.
+
+Provider comparison is based on the providers' own documentation: [AWS Compute Optimizer](https://docs.aws.amazon.com/compute-optimizer/latest/ug/what-is-compute-optimizer.html), [Azure Advisor](https://learn.microsoft.com/en-us/azure/advisor/advisor-overview), and [Google Cloud cost recommendations](https://docs.cloud.google.com/recommender/docs/understand-cost-recs).
+
 ## Checks
 
 ```text
