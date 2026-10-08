@@ -44,3 +44,35 @@ body:has(.console-shell) { background: #eef4ff; color: #172554; }
 .workflow-step { background: #fff; border-color: #dbeafe; }
 .step-number { display: inline-flex; align-items: center; justify-content: center; width: 1.7rem; height: 1.7rem; border-radius: 50%; background: #dbeafe; color: #1e40af; font-size: .8rem; font-weight: 700; }
 @media (prefers-reduced-motion: reduce) { .console-shell *, .console-nav a { transition: none !important; scroll-behavior: auto !important; } }
+
+/* Lightweight visual refresh; no application-state or data behavior changes. */
+body:has(.console-shell) { background: radial-gradient(ellipse at top left, #dbeafe 0, transparent 55%), #f5f8ff; }
+.console-shell { line-height: 1.55; }
+.console-shell h2, .console-shell h3 { letter-spacing: -.025em; }
+.console-hero { background: linear-gradient(125deg, #fff 20%, #eff6ff 75%, #e0f2fe); border-color: #bfdbfe; box-shadow: 0 8px 30px rgb(37 99 235 / .07); }
+.hero-kicker { color: #1d4ed8; font-size: .7rem; font-weight: 800; letter-spacing: .12em; }
+.console-shell .console-primary { background: #1d4ed8; color: #fff; box-shadow: 0 4px 12px rgb(29 78 216 / .18); }
+.console-shell .console-primary:hover { background: #1e40af; }
+.guide-badge { border: 1px solid #c7d2fe; border-radius: 999px; padding: .3rem .7rem; background: #fff; color: #334155; font-size: .75rem; font-weight: 600; }
+.workflow-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .8rem; }
+.workflow-icon { display: inline-flex; align-items: center; justify-content: center; height: 2.5rem; width: 2.5rem; background: #eff6ff; color: #1d4ed8; border-radius: .7rem; }
+.workflow-number { color: #64748b; font-size: .75rem; font-weight: 700; }
+.workflow-step, .metric-card, .explanation-card { transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease; }
+.workflow-step:hover, .metric-card:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgb(37 99 235 / .08); border-color: #93c5fd; }
+.workflow-step:not(:nth-child(2n))::after { content: '→'; position: absolute; right: -.75rem; top: 1.8rem; z-index: 1; color: #2563eb; font-weight: 700; }
+.explanation-card { background: #fff; border-color: #dbe3f0; }
+.explanation-icon { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; border-radius: .6rem; background: #e0f2fe; color: #0369a1; font-size: 1.25rem; font-weight: 700; }
+.console-shell .dashboard-card { border-color: #dbe3f0; border-radius: 1rem; }
+.console-shell .metric-card { border-top: 3px solid #3b82f6; padding: 1rem; }
+.console-shell .metric-card dt { font-weight: 600; }
+.console-shell .metric-card dd { font-variant-numeric: tabular-nums; }
+.console-shell .status-pill { border-radius: 999px; background: #e0f2fe; color: #075985; padding: .2rem .65rem; font-size: .75rem; font-weight: 600; }
+.console-shell button, .console-shell input, .console-shell select, .console-shell textarea { border-radius: .6rem; }
+.console-shell button:disabled { cursor: progress; }
+.console-shell .loading-status::before { content: ''; display: inline-block; width: .9rem; height: .9rem; border: 2px solid #bfdbfe; border-top-color: #2563eb; border-radius: 50%; margin-right: .6rem; animation: console-spin .85s linear infinite; vertical-align: -.1rem; }
+.console-shell [role=status] { animation: console-appear 180ms ease-out; }
+@keyframes console-spin { to { transform: rotate(360deg); } }
+@keyframes console-appear { from { opacity: .65; } to { opacity: 1; } }
+@media (min-width: 640px) { .workflow-grid { grid-template-columns: repeat(4,minmax(0,1fr)); } .workflow-step::after { display: none; } .workflow-step:not(:nth-child(4n))::after { display: block; } }
+@media (min-width: 1024px) { .workflow-grid { grid-template-columns: repeat(8,minmax(0,1fr)); } .workflow-step:not(:last-child)::after { display: block; } }
+@media (prefers-reduced-motion: reduce) { .console-shell *, .console-shell *::before, .console-shell *::after { animation: none !important; transition: none !important; } .console-shell .workflow-step:hover, .console-shell .metric-card:hover { transform: none; } }
