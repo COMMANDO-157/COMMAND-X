@@ -12,7 +12,7 @@ The application provides authenticated CSV/JSON upload, transactional persistenc
 
 At `/console`, upload `public/fixtures/demo-cloud-spike.csv` with DEMO marking. Open the persisted finding for `i-0123456789abcdef0`; it shows USD 1296 potential excess, separate from confirmed waste. Generate Bash, inspect the exact account/region/resource and SHA-256 hash, check that you reviewed the artifact, approve it, then choose **Run approved simulation**. Refresh to verify the decision and audit trail. Do not run the downloaded script during the demonstration.
 
-The application never invokes Bash, Terraform, AWS, Azure or GCP commands. Generated Bash is a manual-review artifact containing real operations: it checks the authenticated cloud account/project/subscription, exact resource and attachment/running state, and requires an exact-ID confirmation before the operator can run a real stop/delete command. Storage deletion is irreversible without backups. App approval permits only simulation; it does not authorize or execute a cloud operation.
+The application never invokes Bash, Terraform, AWS, Azure or GCP commands. Generated Bash is a manual-review artifact containing real operations: it checks the authenticated cloud account/project/subscription, exact resource and attachment/running state, and requires an exact-ID confirmation before the operator can run a real stop/delete command. Compute defaults to stop; optional `--delete` requires a second `DELETE <exact resource ID>` confirmation and can irreversibly delete attached disks. Azure VM deletion may leave billable disks/network resources. Storage deletion is irreversible without backups. App approval permits only simulation; it does not authorize or execute a cloud operation.
 
 Database transactions and row locks enforce pending → approved/rejected → simulated. Approval is bound to the exact immutable script hash and remediation version. Simulation preserves raw observations and financial projections; actual savings are not measured. Fresh proposals permit repeated synthetic demos; retrying the same successful simulation is idempotent. Terraform requires original configuration and an actual resource address and provides review-only material; no provider configuration or apply/destroy plan is invented. Rightsizing without an exact compatible configuration/migration plan remains a manual investigation.
 
@@ -79,7 +79,7 @@ Tables: operators, sessions, auth_attempts, imports, resources, observations, fi
 - Audit and decision updates/deletions are rejected. The application role also lacks truncate and schema-management privileges.
 - All remediation records are constrained to simulation only.
 
-Stage 3 implements validated whole-upload transactions, duplicate handling, sufficient-evidence classifications and import audit events. Future remediation modules must commit approval/state transitions and audit events atomically; schema constraints do not substitute for that remaining application logic.
+Stage 3 implements validated whole-upload transactions, duplicate handling, sufficient-evidence classifications and import audit events. Remediation generation, approval/rejection and simulation commit their state changes and audit events atomically using transactions and row locks.
 
 ## Checks
 
@@ -104,3 +104,5 @@ Deploy the project root as Next.js, using the personal Hobby scope. `vercel.json
 The pool uses Vercel's lifecycle helper. Connection setup is lazy, so a build does not require live database access. Administrative scripts are never invoked by the build.
 
 Captain's Logbook records are maintained separately by the operator. Portal submission remains manual. No telemetry submission automation is claimed.
+
+Competition preparation, formulas, demo steps, technical Q&A and limitations: [handoff guide](docs/competition-handoff.md).

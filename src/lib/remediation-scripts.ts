@@ -7,7 +7,7 @@ function validated(value:unknown,pattern:RegExp,label:string){if(typeof value!==
 export function generateRemediation(target:RemediationTarget,format:"bash"|"terraform") {
   if(!["idle_compute","unattached_storage","overprovisioned_compute","consumption_spike"].includes(target.rule))throw new RemediationError(409,"This finding has no supported remediation action.");
   if(target.rule==="overprovisioned_compute")throw new RemediationError(409,"Rightsizing requires an exact compatible replacement configuration and migration plan; review the finding manually. No unsafe replacement script was generated.");
-  const action=target.type==="compute"?"stop_compute":"delete_unattached_storage";
+  const action=target.type==="compute"?(format==="bash"?"stop_compute_or_explicit_delete":"stop_compute"):"delete_unattached_storage";
   let body:string;const id=target.externalId;
   if(target.provider==="aws"){
     const account=validated(target.accountScope,/^\d{12}$/, "AWS account ID"),region=validated(target.region,/^[a-z]{2}(?:-[a-z]+)+-\d$/, "AWS region"),resource=validated(id,target.type==="compute"?/^i-[0-9a-f]{8}(?:[0-9a-f]{9})?$/:/^vol-[0-9a-f]{8}(?:[0-9a-f]{9})?$/, "AWS resource ID");
@@ -32,6 +32,13 @@ export function generateRemediation(target:RemediationTarget,format:"bash"|"terr
     if(target.type==="compute")body+=`[[ "$(gcloud compute instances describe "$NAME" --project "$PROJECT" --zone "$ZONE" --format='value(status)')" == 'RUNNING' ]] || { echo 'Expected running instance'; exit 1; }\nconfirm\ngcloud compute instances stop "$NAME" --project "$PROJECT" --zone "$ZONE"\n`;
     else body+=`[[ -z "$(gcloud compute disks describe "$NAME" --project "$PROJECT" --zone "$ZONE" --format='value(users)')" ]] || { echo 'Attached disk cannot be deleted'; exit 1; }\nconfirm\ngcloud compute disks delete "$NAME" --project "$PROJECT" --zone "$ZONE" --quiet\n`;
   }
+  // Keep the reversible stop default. The opt-in deletion command retains the
+  // same exact validated scope, live preflight and confirmation as the stop path.
+  if(format==="bash" && target.type==="compute"){
+    const deletion=target.provider==="aws"?'aws ec2 terminate-instances --region "$REGION" --instance-ids "$RESOURCE"':target.provider==="azure"?'az vm delete --ids "$RESOURCE" --yes':'gcloud compute instances delete "$NAME" --project "$PROJECT" --zone "$ZONE" --quiet';
+    const stop=target.provider==="aws"?'aws ec2 stop-instances --region "$REGION" --instance-ids "$RESOURCE"':target.provider==="azure"?'az vm deallocate --ids "$RESOURCE"':'gcloud compute instances stop "$NAME" --project "$PROJECT" --zone "$ZONE"';
+    body=body.replace(`${stop}\n`,`if [[ "$MODE" == 'delete' ]]; then\n  confirm_delete\n  ${deletion}\nelse\n  ${stop}\nfi\n`);
+  }
   let scriptText:string;let originalConfiguration:Record<string,unknown>|null=null;
   if(format==="terraform"){
     const address=validated(target.metadata.terraform_address,/^(?:module\.[A-Za-z_][A-Za-z0-9_]*\.)*[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*(?:\[\d+\])?$/, "existing Terraform resource address");
@@ -42,6 +49,7 @@ export function generateRemediation(target:RemediationTarget,format:"bash"|"terr
   }else{
     const warning=target.type==="block_storage"?"IRREVERSIBLE storage deletion: back up data and verify retention requirements first.":"Stopping compute interrupts workloads; validate dependencies and obtain maintenance approval first.";
     scriptText=`#!/usr/bin/env bash\n# CloudSentry MANUAL REVIEW artifact — generated approval does not execute this file.\n# The application only simulates; running this downloaded file yourself changes real cloud resources.\n# ${warning}\nset -euo pipefail\nconfirm() {\n  local answer\n  printf 'Type the exact resource ID to confirm the real cloud action: '\n  read -r answer\n  [[ "$answer" == "$RESOURCE" ]] || { echo 'Confirmation did not match'; exit 1; }\n}\n${body}`;
+    if(target.type==="compute")scriptText=scriptText.replace('set -euo pipefail\n',`# Default: stop. Optional --delete: IRREVERSIBLE compute deletion; attached disks may also be deleted.\n# Verify backups, retention, dependencies and provider deletion policy before any manual use.\n# No rollback is promised. Azure VM deletion can leave billable disks/network resources; review them separately.\nset -euo pipefail\nMODE='stop'\nif [[ "$#" == '1' && "$1" == '--delete' ]]; then MODE='delete'; elif [[ "$#" != '0' ]]; then echo 'Usage: bash script.sh [--delete]'; exit 1; fi\nconfirm_delete() {\n  local answer\n  echo 'IRREVERSIBLE deletion selected. Backups and retention must be verified independently.'\n  printf 'Type DELETE followed by the exact resource ID: '\n  read -r answer\n  [[ "$answer" == "DELETE $RESOURCE" ]] || { echo 'Deletion confirmation did not match'; exit 1; }\n}\n`);
   }
   return {action,format,scriptText,scriptHash:createHash("sha256").update(scriptText).digest("hex"),originalConfiguration};
 }
