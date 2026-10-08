@@ -1,12 +1,20 @@
 # CloudSentry · COMMAND X
 
-PS-03, ZEPHORIA 2K26. Stage 3 ingestion, anomaly detection and cost intelligence.
+PS-03, ZEPHORIA 2K26. Deployed ingestion, intelligence, dashboard and approved remediation simulation.
 
 ## Scope
 
 Next.js App Router, TypeScript, Tailwind CSS, PostgreSQL, Drizzle ORM, and Zod. Operator authentication uses scrypt password hashes, signed random session cookies, database-backed sessions, exact-origin mutation protection, and a database-backed login attempt budget (five attempts across this single-operator application per 15 minutes). Passwords and connection strings never reach client components.
 
-Stage 3 adds authenticated CSV/JSON upload, transactional persistence, semantic duplicate prevention, exact resource inspection, explainable anomaly findings and currency-separated 30-day projections. The full dashboard, script generation, approval decisions and remediation simulation await later approval. No cloud commands are executed. No fabricated resource metrics are shown.
+The application provides authenticated CSV/JSON upload, transactional persistence, semantic duplicate prevention, exact resource inspection, explainable anomaly findings, currency-separated 30-day projections, a database-backed dashboard, exact-target Bash generation, approval/rejection and persisted simulation/audit history. No cloud commands are executed by the application. No fabricated live metrics or realized savings are shown.
+
+## Remediation and three-minute demonstration
+
+At `/console`, upload `public/fixtures/demo-cloud-spike.csv` with DEMO marking. Open the persisted finding for `i-0123456789abcdef0`; it shows USD 1296 potential excess, separate from confirmed waste. Generate Bash, inspect the exact account/region/resource and SHA-256 hash, check that you reviewed the artifact, approve it, then choose **Run approved simulation**. Refresh to verify the decision and audit trail. Do not run the downloaded script during the demonstration.
+
+The application never invokes Bash, Terraform, AWS, Azure or GCP commands. Generated Bash is a manual-review artifact containing real operations: it checks the authenticated cloud account/project/subscription, exact resource and attachment/running state, and requires an exact-ID confirmation before the operator can run a real stop/delete command. Storage deletion is irreversible without backups. App approval permits only simulation; it does not authorize or execute a cloud operation.
+
+Database transactions and row locks enforce pending → approved/rejected → simulated. Approval is bound to the exact immutable script hash and remediation version. Simulation preserves raw observations and financial projections; actual savings are not measured. Fresh proposals permit repeated synthetic demos; retrying the same successful simulation is idempotent. Terraform requires original configuration and an actual resource address and provides review-only material; no provider configuration or apply/destroy plan is invented. Rightsizing without an exact compatible configuration/migration plan remains a manual investigation.
 
 The application is one shared operator workspace: every enabled operator is trusted to read workspace imports/resources; operator provisioning requires the administrative connection. Uploaded cloud account IDs are resource identities, not separate application tenants. This is not a multi-tenant authorization system.
 

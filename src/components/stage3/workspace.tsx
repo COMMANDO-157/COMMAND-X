@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
+import { RemediationPanel } from "@/components/remediation/panel";
 
 type ImportRecord = { id: string; filename: string; demo: boolean; status: string; rowCount: number; createdAt: string };
 type Resource = { id: string; provider: string; accountScope: string; region: string; type: string; externalId: string };
@@ -21,12 +22,13 @@ async function readApi<T>(url: string, signal?: AbortSignal): Promise<T> {
 function useSavedData<T>(url: string) {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState("");
+  const [revision, setRevision] = useState(0);
   useEffect(() => {
     const controller = new AbortController();
     readApi<T>(url, controller.signal).then(setData).catch((reason: Error) => { if (reason.name !== "AbortError") setError(reason.message); });
     return () => controller.abort();
-  }, [url]);
-  return { data, error };
+  }, [url, revision]);
+  return { data, error, refresh: () => setRevision(value => value + 1) };
 }
 
 function LoadState({ error }: { error: string }) {
@@ -71,7 +73,7 @@ export function ImportWorkspace() {
   </>;
 }
 
-function Findings({ findings }: { findings: Finding[] }) {
+function Findings({ findings, onChanged }: { findings: Finding[]; onChanged?: () => void }) {
   return <section className={panel}><h2 className="text-xl font-semibold">Persisted findings</h2>{findings.length === 0 ? <p className="mt-4 text-slate-400">No qualifying findings. Insufficient evidence does not confirm an anomaly.</p> : findings.map(finding => <article key={finding.id} className="mt-5 border-t border-slate-700 pt-5">
     <h3 className="font-semibold">{finding.rule} · {finding.severity}</h3>
     <Link className={`${link} mt-2 block break-all font-mono`} href={`/console/resources/${finding.resourceId}`}>{finding.externalId}</Link>
@@ -80,22 +82,23 @@ function Findings({ findings }: { findings: Finding[] }) {
     <p className="mt-2 text-sm text-slate-400">{finding.estimateCategory === "potential_excess_spend" ? "Potential excess shown separately; excluded from confirmed-waste total" : finding.projectedLeakage === null ? "Unpriced finding; no savings invented" : finding.selectedForTotal ? "Selected as the current resource waste estimate" : "Historical estimate; excluded from the current resource waste total"} · Status: {finding.status}</p>
     <p className="mt-2 text-sm text-slate-400">Evidence window: {finding.windowStart} → {finding.windowEnd}</p>
     <details className="mt-3"><summary className="cursor-pointer text-slate-300">Inspect thresholds, evidence, pricing source and assumptions</summary><pre className="mt-3 max-h-96 overflow-auto whitespace-pre-wrap break-all rounded bg-slate-950 p-4 text-xs">{JSON.stringify({ thresholds: finding.parameters, evidence: finding.evidence, financialInputs: finding.costInputs }, null, 2)}</pre></details>
+    <RemediationPanel findingId={finding.id} onChanged={onChanged} />
   </article>)}</section>;
 }
 
 export function ImportResults({ id }: { id: string }) {
-  const { data, error } = useSavedData<ImportDetail>(`/api/imports/${encodeURIComponent(id)}`);
+  const { data, error, refresh } = useSavedData<ImportDetail>(`/api/imports/${encodeURIComponent(id)}`);
   if (!data) return <LoadState error={error} />;
   return <><h1 className="mt-6 text-2xl font-semibold">{data.import.filename} {data.import.demo && <span className="text-amber-300">— DEMO</span>}</h1><p className="mt-2 text-slate-400">{data.import.status} · {data.import.rowCount} persisted observations · {data.resources.length} resources</p>
     {data.warnings.length > 0 && <div role="status" className={`${panel} text-amber-200`}><h2 className="font-semibold">Import warnings</h2><ul className="mt-2 list-disc pl-5">{data.warnings.map((warning, index) => <li key={index}>{warning}</li>)}</ul></div>}
     <section className={panel}><h2 className="text-xl font-semibold">This import’s 30-day estimates by currency</h2><p className="mt-2 text-sm text-slate-400">Projections use 720 hours and are estimates, not guaranteed savings. These are saved per-import results. Potential spike excess is separate from confirmed avoidable waste. Currencies are never combined.</p>{data.summaries.length === 0 ? <p className="mt-4">No priced projections available.</p> : data.summaries.map(summary => <div key={summary.currency} className="mt-4"><h3 className="font-semibold">{summary.currency}</h3><p>Confirmed avoidable waste estimate: {summary.avoidableWaste}</p><p>Potential spike excess: {summary.potentialExcessSpend}</p></div>)}</section>
     <section className={panel}><h2 className="text-xl font-semibold">Resources</h2><ul className="mt-3 space-y-3">{data.resources.map(resource => <li key={resource.id}><Link className={`${link} break-all font-mono`} href={`/console/resources/${resource.id}`}>{resource.externalId}</Link><p className="text-sm text-slate-400">{resource.provider} · Account {resource.accountScope} · {resource.region} · {resource.type}</p></li>)}</ul></section>
-    <Findings findings={data.findings} />
+    <Findings findings={data.findings} onChanged={refresh} />
   </>;
 }
 
 export function ResourceResults({ id }: { id: string }) {
-  const { data, error } = useSavedData<ResourceDetail>(`/api/resources/${encodeURIComponent(id)}`);
+  const { data, error, refresh } = useSavedData<ResourceDetail>(`/api/resources/${encodeURIComponent(id)}`);
   if (!data) return <LoadState error={error} />;
-  return <><h1 className="mt-6 break-all font-mono text-xl font-semibold">{data.resource.externalId}</h1><p className="mt-3 text-slate-400">{data.resource.provider} · Account {data.resource.accountScope} · {data.resource.region} · {data.resource.type}</p><Findings findings={data.findings} /><section className={panel}><h2 className="text-xl font-semibold">Persisted observations (latest {data.observations.length} of {data.observationCount})</h2><p className="mt-2 text-sm text-slate-400">Original utilization and pricing evidence; missing values remain unknown. This view shows at most 100 observations; all imported observations remain in the database.</p><pre className="mt-4 max-h-[32rem] overflow-auto whitespace-pre-wrap break-all rounded bg-slate-950 p-4 text-xs">{JSON.stringify(data.observations, null, 2)}</pre></section></>;
+  return <><h1 className="mt-6 break-all font-mono text-xl font-semibold">{data.resource.externalId}</h1><p className="mt-3 text-slate-400">{data.resource.provider} · Account {data.resource.accountScope} · {data.resource.region} · {data.resource.type}</p><Findings findings={data.findings} onChanged={refresh} /><section className={panel}><h2 className="text-xl font-semibold">Persisted observations (latest {data.observations.length} of {data.observationCount})</h2><p className="mt-2 text-sm text-slate-400">Original utilization and pricing evidence; missing values remain unknown. This view shows at most 100 observations; all imported observations remain in the database.</p><pre className="mt-4 max-h-[32rem] overflow-auto whitespace-pre-wrap break-all rounded bg-slate-950 p-4 text-xs">{JSON.stringify(data.observations, null, 2)}</pre></section></>;
 }
