@@ -76,3 +76,4 @@ body:has(.console-shell) { background: radial-gradient(ellipse at top left, #dbe
 @media (min-width: 640px) { .workflow-grid { grid-template-columns: repeat(4,minmax(0,1fr)); } .workflow-step::after { display: none; } .workflow-step:not(:nth-child(4n))::after { display: block; } }
 @media (min-width: 1024px) { .workflow-grid { grid-template-columns: repeat(8,minmax(0,1fr)); } .workflow-step:not(:last-child)::after { display: block; } }
 @media (prefers-reduced-motion: reduce) { .console-shell *, .console-shell *::before, .console-shell *::after { animation: none !important; transition: none !important; } .console-shell .workflow-step:hover, .console-shell .metric-card:hover { transform: none; } }
+.console-shell { width: 100%; min-width: 0; overflow-wrap: anywhere; }
