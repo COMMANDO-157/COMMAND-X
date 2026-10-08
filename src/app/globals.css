@@ -18,3 +18,29 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Console presentation only; authentication and resource pages keep their styles. */
+body:has(.console-shell) { background: #eef4ff; color: #172554; }
+.console-shell { color: #172554; }
+.console-shell h1 { font-size: clamp(1.5rem, 4vw, 2.2rem); letter-spacing: -.035em; color: #0f172a; }
+.console-shell section { scroll-margin-top: 1.5rem; }
+.console-shell .bg-slate-900, .console-shell .bg-slate-950 { background: #fff; }
+.console-shell .text-slate-400, .console-shell .text-slate-300 { color: #475569; }
+.console-shell .text-emerald-300 { color: #047857; }
+.console-shell .text-amber-200 { color: #92400e; }
+.console-shell .text-red-300 { color: #b91c1c; }
+.console-shell .border-slate-700, .console-shell .border-slate-600 { border-color: #cbd5e1; }
+.console-shell button, .console-nav a { transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease; }
+.console-shell button:hover:not(:disabled), .console-nav a:hover { background: #eff6ff; border-color: #2563eb; }
+.console-shell :is(button,a,input,select,textarea,summary):focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; }
+.console-shell .dashboard-card { background: #fff; box-shadow: 0 4px 20px rgb(30 64 175 / .06); }
+.console-shell .metric-card { background: #eff6ff; border: 1px solid #dbeafe; }
+.console-shell .metric-card dd { color: #1d4ed8; font-size: 2rem; }
+.console-shell th { background: #f1f5f9; color: #334155; }
+.console-shell tbody tr:hover { background: #f8fafc; }
+.console-shell pre { background: #f8fafc; color: #0f172a; }
+.console-nav a { padding: .6rem .9rem; background: #fff; border: 1px solid #cbd5e1; border-radius: .6rem; font-size: .875rem; font-weight: 600; }
+.console-guide { background: linear-gradient(120deg, #eff6ff, #f0fdfa); border-color: #bfdbfe; }
+.workflow-step { background: #fff; border-color: #dbeafe; }
+.step-number { display: inline-flex; align-items: center; justify-content: center; width: 1.7rem; height: 1.7rem; border-radius: 50%; background: #dbeafe; color: #1e40af; font-size: .8rem; font-weight: 700; }
+@media (prefers-reduced-motion: reduce) { .console-shell *, .console-nav a { transition: none !important; scroll-behavior: auto !important; } }
